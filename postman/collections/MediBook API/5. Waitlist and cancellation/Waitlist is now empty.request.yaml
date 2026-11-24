@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/api/waitlist?doctor_id=1&date={{capDay}}"
+method: GET
+queryParams:
+  doctor_id: "1"
+  date: "{{capDay}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 10000

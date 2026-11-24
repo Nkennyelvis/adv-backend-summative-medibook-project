@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/patients"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "full_name": "Jean Again",
+      "email": "jean@mail.com",
+      "phone": "0788-000-001"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 409', () => pm.response.to.have.status(409));
+    language: text/javascript
+order: 4000

@@ -1,0 +1,23 @@
+{
+  "locale": "en-GB",
+  "lang_name": "English",
+  "title": "Course Feedback - Advanced Backend Development",
+  "instructions": "Please answer the 5 questions below about the course. Write a few sentences for each one. My answers are already filled in.",
+  "date_label": "Today's date",
+  "language_label": "Language",
+  "submit": "Submit feedback",
+  "questions": [
+    "Which topic in this course did you find most challenging, and why?",
+    "Describe one concept you understood only after the practical assignments. What made it click?",
+    "How has your approach to designing databases or APIs changed since the start of the trimester?",
+    "What would you improve about how this course was taught or assessed?",
+    "How do you plan to apply what you learned in this course going forward?"
+  ],
+  "answers": [
+    "Queues and background workers were the hardest for me. It was difficult to think about two processes running at the same time and what happens when one of them crashes in the middle of a job.",
+    "Database transactions. I only understood them when I had to cancel an appointment and save the refund at the same time. When I made the code fail on purpose and saw that nothing was saved, it finally made sense.",
+    "At the start I put everything in one big table. Now I start by finding the entities and the relationships first, and I let the database enforce rules with constraints instead of only checking them in JavaScript.",
+    "I would like more small practice exercises before the big assignments, especially for Redis and testing, and more examples of good and bad API design.",
+    "I want to build a booking system for a small business in my community, and I will use parameterized queries, transactions and background jobs like I did in this project."
+  ]
+}

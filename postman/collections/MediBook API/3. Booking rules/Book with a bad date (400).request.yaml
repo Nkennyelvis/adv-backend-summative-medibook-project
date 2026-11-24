@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/appointments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "patient_id": 1,
+      "doctor_id": 2,
+      "datetime": "next monday"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 400', () => pm.response.to.have.status(400));
+    language: text/javascript
+order: 8000

@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/appointments?doctor_id=1&date={{capDay}}&status=booked"
+method: GET
+queryParams:
+  doctor_id: "1"
+  date: "{{capDay}}"
+  status: booked
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 11000

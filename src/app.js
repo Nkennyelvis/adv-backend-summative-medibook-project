@@ -1,0 +1,28 @@
+const express = require('express');
+const patientRoutes = require('./routes/patientRoutes');
+const doctorRoutes = require('./routes/doctorRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const waitlistRoutes = require('./routes/waitlistRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const { showFeedback } = require('./controllers/feedbackController');
+const { notFound, errorHandler } = require('./middleware/errorHandler');
+
+const app = express();
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({ name: 'MediBook API', feedback: '/feedback', api: '/api' });
+});
+
+app.use('/api/patients', patientRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/reports', reportRoutes);
+app.get('/feedback', showFeedback);
+
+app.use(notFound);
+app.use(errorHandler);
+
+module.exports = app;

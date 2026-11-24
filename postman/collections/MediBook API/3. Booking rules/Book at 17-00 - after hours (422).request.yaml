@@ -1,0 +1,19 @@
+$kind: http-request
+name: Book at 17:00 - after hours (422)
+url: "{{baseUrl}}/api/appointments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "patient_id": 1,
+      "doctor_id": 2,
+      "datetime": "{{day3}} 17:00"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 422', () => pm.response.to.have.status(422));
+    language: text/javascript
+order: 5000

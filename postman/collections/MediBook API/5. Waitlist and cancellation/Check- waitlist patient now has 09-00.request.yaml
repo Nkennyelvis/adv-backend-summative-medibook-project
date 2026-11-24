@@ -1,0 +1,24 @@
+$kind: http-request
+name: "Check: waitlist patient now has 09:00"
+description: Waits 2 seconds first so the worker has time to book the waitlisted patient. The 09:00 slot should now belong to Grace Mukamana.
+url: "{{baseUrl}}/api/appointments?doctor_id=1&date={{capDay}}&status=booked"
+method: GET
+queryParams:
+  doctor_id: "1"
+  date: "{{capDay}}"
+  status: booked
+scripts:
+  - type: beforeRequest
+    code: |-
+      // give the worker a moment to book the waitlisted patient
+      setTimeout(() => {}, 2000);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('09:00 went to the waitlist patient', () => {
+        const nine = pm.response.json().find((a) => a.appt_datetime.endsWith('09:00:00'));
+        pm.expect(nine && nine.patient_id).to.eql(Number(pm.collectionVariables.get('waitPatientId')));
+      });
+    language: text/javascript
+order: 9000

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/appointments/1/cancel"
+method: PATCH
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 422', () => pm.response.to.have.status(422));
+    language: text/javascript
+order: 15000

@@ -1,0 +1,23 @@
+{
+  "locale": "fr-FR",
+  "lang_name": "Français",
+  "title": "Avis sur le cours - Développement Backend Avancé",
+  "instructions": "Veuillez répondre aux 5 questions ci-dessous sur le cours. Écrivez quelques phrases pour chacune. Mes réponses sont déjà remplies.",
+  "date_label": "Date du jour",
+  "language_label": "Langue",
+  "submit": "Envoyer l'avis",
+  "questions": [
+    "Quel sujet de ce cours avez-vous trouvé le plus difficile, et pourquoi ?",
+    "Décrivez un concept que vous n'avez compris qu'après les travaux pratiques. Qu'est-ce qui vous a aidé à le comprendre ?",
+    "Comment votre façon de concevoir des bases de données ou des API a-t-elle changé depuis le début du trimestre ?",
+    "Que changeriez-vous dans la manière dont ce cours a été enseigné ou évalué ?",
+    "Comment comptez-vous appliquer ce que vous avez appris dans ce cours à l'avenir ?"
+  ],
+  "answers": [
+    "Les files d'attente et les workers en arrière-plan ont été les plus difficiles pour moi. C'était compliqué de penser à deux processus qui tournent en même temps et à ce qui se passe quand l'un d'eux plante au milieu d'une tâche.",
+    "Les transactions de base de données. Je les ai vraiment comprises quand j'ai dû annuler un rendez-vous et enregistrer le remboursement en même temps. Quand j'ai fait échouer le code exprès et vu que rien n'était enregistré, j'ai enfin compris.",
+    "Au début, je mettais tout dans une seule grande table. Maintenant, je commence par trouver les entités et les relations, et je laisse la base de données appliquer les règles avec des contraintes au lieu de seulement les vérifier en JavaScript.",
+    "J'aimerais avoir plus de petits exercices avant les grands devoirs, surtout pour Redis et les tests, et plus d'exemples de bonne et de mauvaise conception d'API.",
+    "Je veux créer un système de réservation pour une petite entreprise de ma communauté, et j'utiliserai des requêtes paramétrées, des transactions et des tâches en arrière-plan comme dans ce projet."
+  ]
+}

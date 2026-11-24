@@ -1,0 +1,16 @@
+$kind: http-request
+name: Find the 09:00 appointment
+url: "{{baseUrl}}/api/appointments?doctor_id=1&date={{capDay}}&status=booked"
+method: GET
+queryParams:
+  doctor_id: "1"
+  date: "{{capDay}}"
+  status: booked
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      const nine = pm.response.json().find((a) => a.appt_datetime.endsWith('09:00:00'));
+      if (nine) pm.collectionVariables.set('cancelApptId', nine.appointment_id);
+    language: text/javascript
+order: 6000

@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/api/patients"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "full_name": "Grace Mukamana",
+      "email": "grace@mail.com",
+      "phone": "0788-456-789"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('waitPatientId', pm.response.json().patient_id);
+    language: text/javascript
+order: 1000

@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/api/doctors/1/availability?date={{capDay}}"
+method: GET
+queryParams:
+  date: "{{capDay}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 1000

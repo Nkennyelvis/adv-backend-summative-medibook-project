@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/api/appointments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "patient_id": 12,
+      "doctor_id": 1,
+      "datetime": "{{capDay}} 15:30"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('bookedApptId', pm.response.json().appointment.appointment_id);
+    language: text/javascript
+order: 2000

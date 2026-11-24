@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/api/patients"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "full_name": "Jean Uwase",
+      "email": "jean@mail.com",
+      "phone": "0788-123-456",
+      "date_of_birth": "1998-05-14"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('newPatientId', pm.response.json().patient_id);
+    language: text/javascript
+order: 3000

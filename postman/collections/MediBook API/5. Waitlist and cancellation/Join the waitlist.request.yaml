@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/waitlist"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "patient_id": {{waitPatientId}},
+      "doctor_id": 1,
+      "date": "{{capDay}}"
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('status is 201', () => pm.response.to.have.status(201));
+    language: text/javascript
+order: 3000

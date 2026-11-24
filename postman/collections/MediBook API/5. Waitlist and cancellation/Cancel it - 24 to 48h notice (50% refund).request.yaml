@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/api/appointments/{{midApptId}}/cancel"
+method: PATCH
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('refund is 50%', () => pm.expect(pm.response.json().refund.percent).to.eql(50));
+    language: text/javascript
+order: 12000

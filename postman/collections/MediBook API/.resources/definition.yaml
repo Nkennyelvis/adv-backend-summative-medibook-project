@@ -1,0 +1,39 @@
+$kind: collection
+description: Run `npm run db:setup` right before using this collection, so the sample data and the dates match. Start the API (`npm start`) and the worker (`npm run worker`). Then run the folders in order.
+variables:
+  baseUrl: http://localhost:3010
+  capDay: ""
+  day3: ""
+  yesterday: ""
+  lateSlot: ""
+  midSlot: ""
+  newPatientId: ""
+  newDoctorId: ""
+  bookedApptId: ""
+  waitPatientId: ""
+  cancelApptId: ""
+  midApptId: ""
+  lateApptId: ""
+scripts:
+  - type: http:beforeRequest
+    code: |-
+      // works out the demo dates from today's date (same as the seed data)
+      const pad = (n) => String(n).padStart(2, '0');
+      const fmt = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      const addDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
+      pm.collectionVariables.set('capDay', fmt(addDays(5)));
+      pm.collectionVariables.set('day3', fmt(addDays(3)));
+      pm.collectionVariables.set('yesterday', fmt(addDays(-1)));
+
+      // next free-looking slot from now (less than 24h away) and the same slot one day later (24-48h away)
+      const s = new Date();
+      s.setSeconds(0, 0);
+      s.setMinutes(s.getMinutes() + 5);
+      if (s.getMinutes() % 30) s.setMinutes(s.getMinutes() + (30 - (s.getMinutes() % 30)));
+      if (s.getHours() < 9) s.setHours(9, 0);
+      if (s.getHours() * 60 + s.getMinutes() > 16 * 60 + 30) { s.setDate(s.getDate() + 1); s.setHours(9, 0); }
+      const time = pad(s.getHours()) + ':' + pad(s.getMinutes());
+      pm.collectionVariables.set('lateSlot', fmt(s) + ' ' + time);
+      const m = new Date(s); m.setDate(m.getDate() + 1);
+      pm.collectionVariables.set('midSlot', fmt(m) + ' ' + time);
+    language: text/javascript

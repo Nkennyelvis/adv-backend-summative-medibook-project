@@ -1,0 +1,1411 @@
+{
+  "info": {
+    "name": "MediBook API",
+    "description": "Run `npm run db:setup` right before using this collection, so the sample data and the dates match. Start the API (`npm start`) and the worker (`npm run worker`). Then run the folders in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// works out the demo dates from today's date (same as the seed data)",
+          "const pad = (n) => String(n).padStart(2, '0');",
+          "const fmt = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());",
+          "const addDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };",
+          "pm.collectionVariables.set('capDay', fmt(addDays(5)));",
+          "pm.collectionVariables.set('day3', fmt(addDays(3)));",
+          "pm.collectionVariables.set('yesterday', fmt(addDays(-1)));",
+          "",
+          "// next free-looking slot from now (less than 24h away) and the same slot one day later (24-48h away)",
+          "const s = new Date();",
+          "s.setSeconds(0, 0);",
+          "s.setMinutes(s.getMinutes() + 5);",
+          "if (s.getMinutes() % 30) s.setMinutes(s.getMinutes() + (30 - (s.getMinutes() % 30)));",
+          "if (s.getHours() < 9) s.setHours(9, 0);",
+          "if (s.getHours() * 60 + s.getMinutes() > 16 * 60 + 30) { s.setDate(s.getDate() + 1); s.setHours(9, 0); }",
+          "const time = pad(s.getHours()) + ':' + pad(s.getMinutes());",
+          "pm.collectionVariables.set('lateSlot', fmt(s) + ' ' + time);",
+          "const m = new Date(s); m.setDate(m.getDate() + 1);",
+          "pm.collectionVariables.set('midSlot', fmt(m) + ' ' + time);"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3010"
+    },
+    {
+      "key": "capDay",
+      "value": ""
+    },
+    {
+      "key": "day3",
+      "value": ""
+    },
+    {
+      "key": "yesterday",
+      "value": ""
+    },
+    {
+      "key": "lateSlot",
+      "value": ""
+    },
+    {
+      "key": "midSlot",
+      "value": ""
+    },
+    {
+      "key": "newPatientId",
+      "value": ""
+    },
+    {
+      "key": "newDoctorId",
+      "value": ""
+    },
+    {
+      "key": "bookedApptId",
+      "value": ""
+    },
+    {
+      "key": "waitPatientId",
+      "value": ""
+    },
+    {
+      "key": "cancelApptId",
+      "value": ""
+    },
+    {
+      "key": "midApptId",
+      "value": ""
+    },
+    {
+      "key": "lateApptId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Patients (CRUD)",
+      "item": [
+        {
+          "name": "Get all patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get one patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Jean Uwase\",\n  \"email\": \"jean@mail.com\",\n  \"phone\": \"0788-123-456\",\n  \"date_of_birth\": \"1998-05-14\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('newPatientId', pm.response.json().patient_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create patient - same email (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Jean Again\",\n  \"email\": \"jean@mail.com\",\n  \"phone\": \"0788-000-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create patient - bad data (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"\",\n  \"email\": \"not-an-email\",\n  \"phone\": \"12\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update patient",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients/{{newPatientId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0788-999-000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get patient that does not exist (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/9999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete patient",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/{{newPatientId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete patient with appointments (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/patients/1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Doctors (CRUD)",
+      "item": [
+        {
+          "name": "Get all doctors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get doctors by specialty",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors?specialty=Dermatology"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get one doctor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors/1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/doctors",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Dr. Alice Ingabire\",\n  \"email\": \"ingabire@medibook.com\",\n  \"specialty\": \"Neurology\",\n  \"consultation_fee\": 180,\n  \"room\": \"R-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('newDoctorId', pm.response.json().doctor_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update doctor fee",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/doctors/{{newDoctorId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultation_fee\": 200\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update doctor - negative fee (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/doctors/{{newDoctorId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultation_fee\": -50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete doctor",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors/{{newDoctorId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete doctor with appointments (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors/1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Booking rules",
+      "item": [
+        {
+          "name": "Dr. Boateng availability (11 of 12 booked)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors/1/availability?date={{capDay}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book the 12th slot (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 12,\n  \"doctor_id\": 1,\n  \"datetime\": \"{{capDay}} 15:30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('bookedApptId', pm.response.json().appointment.appointment_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book a 13th slot - day full (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 12,\n  \"doctor_id\": 1,\n  \"datetime\": \"{{capDay}} 16:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book a slot that is taken (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"doctor_id\": 2,\n  \"datetime\": \"{{day3}} 10:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book at 17:00 - after hours (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"doctor_id\": 2,\n  \"datetime\": \"{{day3}} 17:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book at 09:15 - not a slot (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"doctor_id\": 2,\n  \"datetime\": \"{{day3}} 09:15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book in the past (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"doctor_id\": 2,\n  \"datetime\": \"{{yesterday}} 10:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book with a bad date (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"doctor_id\": 2,\n  \"datetime\": \"next monday\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book for a patient that does not exist (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 999,\n  \"doctor_id\": 2,\n  \"datetime\": \"{{day3}} 11:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get the new appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{bookedApptId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Dr. Boateng's appointments that day",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments?doctor_id=1&date={{capDay}}&status=booked"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Stats and reports",
+      "item": [
+        {
+          "name": "Dr. Boateng stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/doctors/1/stats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Doctors report (Dr. Asante has 0)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reports/doctors"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Busy days report (> 80% full)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reports/busy-days"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Waitlist and cancellation",
+      "item": [
+        {
+          "name": "Create a patient for the waitlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/patients",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Grace Mukamana\",\n  \"email\": \"grace@mail.com\",\n  \"phone\": \"0788-456-789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('waitPatientId', pm.response.json().patient_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Try to book - day is full (409 + waitlist offer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": {{waitPatientId}},\n  \"doctor_id\": 1,\n  \"datetime\": \"{{capDay}} 16:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Join the waitlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/waitlist",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": {{waitPatientId}},\n  \"doctor_id\": 1,\n  \"date\": \"{{capDay}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Join again (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/waitlist",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": {{waitPatientId}},\n  \"doctor_id\": 1,\n  \"date\": \"{{capDay}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "See the waitlist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/waitlist?doctor_id=1&date={{capDay}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Find the 09:00 appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments?doctor_id=1&date={{capDay}}&status=booked"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const nine = pm.response.json().find((a) => a.appt_datetime.endsWith('09:00:00'));",
+                  "if (nine) pm.collectionVariables.set('cancelApptId', nine.appointment_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel it - more than 48h notice (100% refund)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{cancelApptId}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('refund is 100%', () => pm.expect(pm.response.json().refund.percent).to.eql(100));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel it again (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{cancelApptId}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check: waitlist patient now has 09:00",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments?doctor_id=1&date={{capDay}}&status=booked",
+            "description": "Waits 2 seconds first so the worker has time to book the waitlisted patient. The 09:00 slot should now belong to Grace Mukamana."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// give the worker a moment to book the waitlisted patient",
+                  "setTimeout(() => {}, 2000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('09:00 went to the waitlist patient', () => {",
+                  "  const nine = pm.response.json().find((a) => a.appt_datetime.endsWith('09:00:00'));",
+                  "  pm.expect(nine && nine.patient_id).to.eql(Number(pm.collectionVariables.get('waitPatientId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Waitlist is now empty",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/waitlist?doctor_id=1&date={{capDay}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book a slot 24-48h away",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 4,\n  \"doctor_id\": 3,\n  \"datetime\": \"{{midSlot}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('midApptId', pm.response.json().appointment.appointment_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel it - 24 to 48h notice (50% refund)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{midApptId}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('refund is 50%', () => pm.expect(pm.response.json().refund.percent).to.eql(50));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book a slot less than 24h away",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 2,\n  \"doctor_id\": 3,\n  \"datetime\": \"{{lateSlot}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('lateApptId', pm.response.json().appointment.appointment_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel it - under 24h notice (0% refund)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{lateApptId}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('refund is 0%', () => pm.expect(pm.response.json().refund.percent).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel a past appointment (422)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/1/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel an appointment that does not exist (404)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/99999/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Doctors report after cancellations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reports/doctors"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Feedback page (i18n)",
+      "item": [
+        {
+          "name": "Feedback - English (default)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/feedback"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Feedback - French",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/feedback?lang=fr"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Feedback - unknown language falls back to English",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/feedback?lang=de"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
